@@ -1,0 +1,72 @@
+{% extends 'frontend/layout.html' %}
+{% load static %}
+{% block title %}Настройки{% endblock title %}
+{% block body %}
+    <h1 class="w-75 mx-auto">Настройки</h1>
+    <form id="change-mpw-form" class="w-75 mx-auto">
+        <input type="text" name="new-username" id="new-username" class="form-control mb-2" placeholder="Логин">
+        <input type="password" name="old-mpw" id="old-mpw" class="form-control mb-2" placeholder="Мастер-пароль">
+        <input type="password" name="new-mpw" id="new-mpw" class="form-control mb-2" placeholder="Новый мастер-пароль">
+        <input type="password" name="confirm-new-mpw" id="confirm-new-mpw" class="form-control mb-2" placeholder="Новый мастер-пароль еще раз">
+        <div class="d-grid">
+            <button class="btn btn-primary" type="submit">Обновить</button>
+        </div>
+    </form>
+    {% endblock body %}
+{% block script %}
+
+<script src="{% static 'frontend/getPasswords.js' %}" type="text/javascript"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/3.1.2/rollups/aes.js"></script>
+    <script src="{% static 'frontend/crypto.js' %}" type="text/javascript"></script>
+    <script src="{% static 'frontend/patchData.js' %}" type="text/javascript"></script>
+    <script src="{% static 'frontend/getCookie.js' %}" type="text/javascript"></script>
+    <script src="{% static 'frontend/verifyMasterPassword.js' %}" type="text/javascript"></script>    
+    <script src="{% static 'frontend/postData.js' %}" type="text/javascript"></script>
+    <script src="{% static 'frontend/logout.js' %}" type="text/javascript"></script>
+    <script>
+        document.querySelector("#change-mpw-form").onsubmit = () => {
+            let masterPassword = document.querySelector("#old-mpw").value;
+            let newMasterPassword = document.querySelector("#new-mpw").value;
+            let newUsername = document.querySelector("#new-username").value; 
+            patchData(`${window.location.origin}/api/update-user-data`, data={
+                new_username: newUsername,
+                password: masterPassword,
+                new_password: newMasterPassword
+            })
+            .then(response  => {
+                // couldn't update user data
+                if(!response.ok) {
+                    response.json().then(result => alert(result.error))
+                    return false;
+                }
+                // could update user data with new username, but no new master password was given
+                // so don't need to re-encrypt all passwords
+                if(newMasterPassword == "") {
+                    alert("Данные успешно обновлены.")
+                    return false;
+                }
+                // updated username and master password
+                // re-encrypt all passwords and send the vault to the server
+                getPasswords()
+                .then(passwords => {
+                    console.log(passwords);
+                    passwords.forEach(password => {
+                        // reencrypt passwords
+                        let plaintext = decrypt(password.encrypted_password, masterPassword)
+                        let newEncryptedPassword = encrypt(plaintext, newMasterPassword);
+                        password.encrypted_password = newEncryptedPassword;
+                    })
+                    // send encrypted passwords
+                    patchData(`${window.location.origin}/api/passwords`, data={passwords: passwords})
+                    .then(response => response.json())
+                    .then(result => {
+                        alert("Данные успешно обновлены и пароль зашифрован");
+                    })
+                });
+            })
+                
+            
+            return false;
+        }
+    </script>
+{% endblock script %}
