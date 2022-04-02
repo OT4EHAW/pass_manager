@@ -32,6 +32,7 @@ function displayPasswords(passwords) {
                             <div class="password-tags">${tagsHTML}</div>
                         </div>
                         <div class="d-grid gap-2">
+                            
                             <button class="btn btn-primary edit-button" type="button">Редактировать</button>
                             <button class="btn btn-danger delete-button" type="button">Удалить</button>
                         </div>

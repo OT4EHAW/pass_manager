@@ -122,15 +122,8 @@
           s = el.innerHTML;
           return s;
       }
-        // Generate random password
-        document.querySelector("#generate-password").onclick = () => {
-            let length = parseInt(document.querySelector("#length").value);
-            let generatedPassword = generateRandomPassword(length);
-            document.querySelector("#generated-password").innerHTML = HtmlEncode(generatedPassword); //HtmlEncode(generatedPassword);
-        }
-
-        // Copy generated random password
-        document.querySelector("#copy-generated-password").onclick = () => navigator.clipboard.writeText(document.querySelector("#generated-password").innerText.trim());
+        
+        
     </script>
 
 {% endblock script %}
